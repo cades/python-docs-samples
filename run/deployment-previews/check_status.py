@@ -194,6 +194,8 @@ def cleanup(
 @add_options(_github_options)
 @click.option("--pull-request", required=True, help="GitHub Pull Request ID", type=int)
 @click.option("--commit-sha", required=True, help="GitHub commit (SHORT_SHA)")
+@click.option("--commit-status-context", required=False, help="GitHub commit status context")
+@click.option("--commit-status-description", required=False, help="GitHub commit status description")
 # [START cloudrun_deployment_preview_setstatus]
 def set(
     dry_run: str,
@@ -202,11 +204,15 @@ def set(
     service: str,
     repo_name: str,
     commit_sha: str,
+    commit_status_context: str,
+    commit_status_description: str,
     pull_request: str,
 ) -> None:
     """Set a status on a GitHub commit to a specific revision URL"""
     service_obj = get_service(project_id, region, service)
     revision_url = get_revision_url(service_obj, tag=make_tag(pull_request))
+    commit_status_context = commit_status_context or "Deployment Preview"
+    commit_status_description = commit_status_description or "Your preview is now available."
 
     ghtoken = os.environ.get("GITHUB_TOKEN", None)
 
@@ -242,8 +248,8 @@ def set(
     commit.create_status(
         state="success",
         target_url=revision_url,
-        context="Deployment Preview",
-        description="Your preview is now available.",
+        context=commit_status_context,
+        description=commit_status_description,
     )
     click.secho("Success: ", fg="green", bold=True, nl=False)
     click.echo(
